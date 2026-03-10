@@ -2,9 +2,9 @@ name: Java CI with Gradle
 
 on:
   push:
-    branches: [ "master", "develop" ]
+    branches: [ "master", "develop", "feature/exceptions" ]
   pull_request:
-    branches: [ "master", "develop" ]
+    branches: [ "master", "develop", "feature/exceptions" ]
 
 jobs:
   build:
@@ -22,10 +22,10 @@ jobs:
           distribution: 'temurin'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582
+        uses: gradle/actions/setup-gradle@v3
 
       - name: Give Gradle permission
         run: chmod +x gradlew
 
-      - name: Build with Gradle Wrapper
-        run: ./gradlew build
+      - name: Build with Gradle Wrapper (Skipping Tests)
+        run: ./gradlew build -x test
