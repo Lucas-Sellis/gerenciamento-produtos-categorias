@@ -1,7 +1,7 @@
 package com.lucassellis.gerenciamento_produtos_categorias.business.Service;
 
 import com.lucassellis.gerenciamento_produtos_categorias.business.dto.ProdutosDTO;
-
+import com.lucassellis.gerenciamento_produtos_categorias.business.mapper.ProdutosMapper;
 import com.lucassellis.gerenciamento_produtos_categorias.infrastructure.entity.ProdutosEntity;
 import com.lucassellis.gerenciamento_produtos_categorias.infrastructure.repository.CategoriasRepository;
 import com.lucassellis.gerenciamento_produtos_categorias.infrastructure.repository.ProdutosRepository;
@@ -19,7 +19,8 @@ public class ProdutosService {
 
     private final CategoriasRepository categoriasRepository;
 
-    private final com.lucassellis.gerenciamento_produtos_categorias.business.mapper.ProdutosMapper mapper;
+    private final ProdutosMapper mapper;
+
 
     public ProdutosDTO criar(ProdutosDTO dto) {
 
@@ -27,6 +28,7 @@ public class ProdutosService {
             throw new RuntimeException("Erro: A categoria " + dto.getCategoriaId() + " não existe!");
         }
         ProdutosEntity entity = mapper.toEntity(dto);
+
         return mapper.toDto(repository.save(entity));
     }
 
