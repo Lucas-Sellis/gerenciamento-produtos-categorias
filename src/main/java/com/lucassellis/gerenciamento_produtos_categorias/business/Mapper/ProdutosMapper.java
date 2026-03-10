@@ -1,4 +1,4 @@
-package com.lucassellis.gerenciamento_produtos_categorias.business.mapper;
+package com.lucassellis.gerenciamento_produtos_categorias.business.Mapper;
 
 import com.lucassellis.gerenciamento_produtos_categorias.business.dto.ProdutosDTO;
 import com.lucassellis.gerenciamento_produtos_categorias.infrastructure.entity.ProdutosEntity;

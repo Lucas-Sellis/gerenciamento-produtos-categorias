@@ -17,7 +17,7 @@ public class CategoriasEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "nome", nullable = false)
+    @Column(name = "nome", unique = true, nullable = false)
     private String nome;
 
     /**
@@ -28,6 +28,6 @@ public class CategoriasEntity {
      * * 'cascade = CascadeType.ALL': Se você deletar uma categoria,
      * todos os produtos ligados a ela também serão deletados (cuidado aqui!).
      */
-    @OneToMany(mappedBy = "categoria", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "categoria")
     private List<ProdutosEntity> produtos;
 }

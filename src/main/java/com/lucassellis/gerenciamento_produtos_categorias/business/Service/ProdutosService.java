@@ -1,12 +1,16 @@
 package com.lucassellis.gerenciamento_produtos_categorias.business.Service;
 
 import com.lucassellis.gerenciamento_produtos_categorias.business.dto.ProdutosDTO;
-import com.lucassellis.gerenciamento_produtos_categorias.business.mapper.ProdutosMapper;
+import com.lucassellis.gerenciamento_produtos_categorias.business.Mapper.ProdutosMapper;
 import com.lucassellis.gerenciamento_produtos_categorias.infrastructure.entity.ProdutosEntity;
+import com.lucassellis.gerenciamento_produtos_categorias.infrastructure.exceptions.ConflictException;
+import com.lucassellis.gerenciamento_produtos_categorias.infrastructure.exceptions.ResourceNotFoundException;
 import com.lucassellis.gerenciamento_produtos_categorias.infrastructure.repository.CategoriasRepository;
 import com.lucassellis.gerenciamento_produtos_categorias.infrastructure.repository.ProdutosRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -16,60 +20,62 @@ import java.util.stream.Collectors;
 public class ProdutosService {
 
     private final ProdutosRepository repository;
-
     private final CategoriasRepository categoriasRepository;
+    private final ProdutosMapper mapper ;
 
-    private final ProdutosMapper mapper;
-
-
+    @Transactional
     public ProdutosDTO criar(ProdutosDTO dto) {
-
+        // Se a categoria não existe, lançamos o 404 (ResourceNotFound) com a mensagem clara
         if (!categoriasRepository.existsById(dto.getCategoriaId())) {
-            throw new RuntimeException("Erro: A categoria " + dto.getCategoriaId() + " não existe!");
+            throw new ResourceNotFoundException("Erro ao criar produto: A categoria " + dto.getCategoriaId() + " não existe!");
         }
-        ProdutosEntity entity = mapper.toEntity(dto);
 
+        ProdutosEntity entity = mapper.toEntity(dto);
         return mapper.toDto(repository.save(entity));
     }
 
     public List<ProdutosDTO> listar() {
-
         return repository.findAll()
                 .stream()
-                .map(mapper::toDto) // USAMOS O MAPPER AQUI!
+                .map(mapper::toDto)
                 .collect(Collectors.toList());
     }
 
     public ProdutosDTO buscarPorId(Long id) {
-
-        ProdutosEntity entity = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Produto não encontrado com o ID: " + id));
-        return mapper.toDto(entity); // CONVERTEMOS PARA DTO
+        return repository.findById(id)
+                .map(mapper::toDto)
+                .orElseThrow(() -> new ResourceNotFoundException("Produto com ID " + id + " não localizado."));
     }
 
+    @Transactional
     public ProdutosDTO atualizar(Long id, ProdutosDTO dto) {
-        // 1. Busca o produto no banco
+        // 1. Verifica se o produto existe
         ProdutosEntity entity = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Produto não encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Não foi possível atualizar: Produto ID " + id + " não encontrado."));
 
-        // 2. Valida se a categoria enviada no DTO existe
+        // 2. Verifica se a nova categoria informada existe
         if (!categoriasRepository.existsById(dto.getCategoriaId())) {
-            throw new RuntimeException("Categoria informada não existe!");
+            throw new ResourceNotFoundException("Erro na atualização: A categoria " + dto.getCategoriaId() + " não existe!");
         }
 
-        // 3. A MÁGICA: O MapStruct atualiza os campos da 'entity' automaticamente
+        // 3. Atualiza os campos
         mapper.updateEntityFromDto(dto, entity);
+        entity.setId(id); // Garante que o ID permaneça o correto
 
-        // 4. Salva a entidade já atualizada e retorna o DTO
         return mapper.toDto(repository.save(entity));
     }
 
+    @Transactional
     public void deletar(Long id) {
 
         if (!repository.existsById(id)) {
-            throw new RuntimeException("Não é possível deletar: Produto não encontrado");
+            throw new ResourceNotFoundException("Falha ao deletar: Categoria com ID " + id + " não existe.");
         }
-        repository.deleteById(id);
-    }
 
+        try {
+            repository.deleteById(id);
+        } catch (DataIntegrityViolationException e) {
+            throw new ConflictException("Não é possível deletar a categoria pois existem produtos vinculados.");
+        }
+    }
 }
