@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/Produtos")
+@RequestMapping("/produtos")
 @RequiredArgsConstructor
 public class ProdutosController {
 
@@ -35,7 +35,6 @@ public class ProdutosController {
 
     @PutMapping("/{id}")
     public ResponseEntity<ProdutosDTO> atualizar(@PathVariable Long id, @RequestBody @Valid ProdutosDTO dto) {
-        // No Service de Produtos, você pode criar um método atualizar similar ao de Produtos
         return ResponseEntity.ok(service.atualizar(id, dto));
     }
 
