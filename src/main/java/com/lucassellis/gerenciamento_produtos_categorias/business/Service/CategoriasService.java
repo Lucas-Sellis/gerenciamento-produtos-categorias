@@ -3,11 +3,13 @@ package com.lucassellis.gerenciamento_produtos_categorias.business.Service;
 import com.lucassellis.gerenciamento_produtos_categorias.business.Mapper.CategoriasMapper;
 import com.lucassellis.gerenciamento_produtos_categorias.business.dto.CategoriasDTO;
 import com.lucassellis.gerenciamento_produtos_categorias.infrastructure.entity.CategoriasEntity;
+import com.lucassellis.gerenciamento_produtos_categorias.infrastructure.exceptions.ConflictException;
+import com.lucassellis.gerenciamento_produtos_categorias.infrastructure.exceptions.ResourceNotFoundException;
 import com.lucassellis.gerenciamento_produtos_categorias.infrastructure.repository.CategoriasRepository;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.jspecify.annotations.Nullable;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -17,50 +19,55 @@ import java.util.stream.Collectors;
 public class CategoriasService {
 
     private final CategoriasRepository repository;
-
     private final CategoriasMapper mapper;
 
-    public CategoriasDTO criar(CategoriasDTO dto) {
 
-        CategoriasEntity entity = mapper.toEntity(dto);
-        return mapper.toDto(repository.save(entity));
+    @Transactional
+    public CategoriasDTO criar(CategoriasDTO dto) {
+        try {
+            CategoriasEntity entity = mapper.toEntity(dto);
+            return mapper.toDto(repository.save(entity));
+        } catch (DataIntegrityViolationException e) {
+            throw new ConflictException("Categoria já existe.");
+        }
     }
 
-
+    @Transactional
     public CategoriasDTO atualizar(Long id, CategoriasDTO dto) {
-        // 1. Busca a categoria existente
+        // Mensagem específica para o fluxo de atualização
         CategoriasEntity entity = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Categoria não encontrada para atualizar"));
+                .orElseThrow(() -> new ResourceNotFoundException("Não foi possível atualizar: Categoria com ID " + id + " não encontrada."));
 
-        // 2. O MapStruct transfere os dados do DTO para a Entity
         mapper.updateEntityFromDto(dto, entity);
+        entity.setId(id); // Garante que o ID do banco não mude
 
-        // 3. Salva e retorna o DTO
         return mapper.toDto(repository.save(entity));
     }
 
     public List<CategoriasDTO> listar() {
-
         return repository.findAll().stream()
                 .map(mapper::toDto)
                 .collect(Collectors.toList());
     }
 
-
     public CategoriasDTO buscarPorId(Long id) {
-
-        CategoriasEntity entity = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
-        return mapper.toDto(entity);
+        // Mensagem direta para a busca
+        return repository.findById(id)
+                .map(mapper::toDto)
+                .orElseThrow(() -> new ResourceNotFoundException("Categoria com ID " + id + " não existe em nossa base de dados."));
     }
 
+    @Transactional
     public void deletar(Long id) {
 
         if (!repository.existsById(id)) {
-            throw new RuntimeException("Categoria não encontrada para deletar");
+            throw new ResourceNotFoundException("Falha ao deletar: Categoria com ID " + id + " não existe.");
         }
-        repository.deleteById(id);
+
+        try {
+            repository.deleteById(id);
+        } catch (DataIntegrityViolationException e) {
+            throw new ConflictException("Não é possível deletar a categoria pois existem produtos vinculados.");
+        }
     }
-
-
 }
