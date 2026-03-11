@@ -19,43 +19,41 @@ import java.util.stream.Collectors;
 public class CategoriasService {
 
     private final CategoriasRepository repository;
+
     private final CategoriasMapper mapper;
 
-    // @Transactional: "Tudo ou Nada". Se o banco falhar no meio do caminho,
-    // ele desfaz tudo para não deixar lixo no sistema.
     @Transactional
     public CategoriasDTO criar(CategoriasDTO dto) {
+
         try {
             CategoriasEntity entity = mapper.toEntity(dto);
             return mapper.toDto(repository.save(entity));
         } catch (DataIntegrityViolationException e) {
-            // Se tentar criar um nome que já existe (Unique), lança o erro de Conflito.
             throw new ConflictException("Categoria já existe.");
         }
     }
 
     @Transactional
     public CategoriasDTO atualizar(Long id, CategoriasDTO dto) {
-        // Primeiro: Verifica se a categoria existe. Se não existir, lança o erro 404 (NotFound).
+
         CategoriasEntity entity = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Categoria com ID " + id + " não encontrada."));
-
-        // updateEntityFromDto: Ele pega o que você escreveu no DTO e "cola" dentro da Entity que achamos no banco.
         mapper.updateEntityFromDto(dto, entity);
-        entity.setId(id); // Trava o ID para garantir que estamos mexendo no brinquedo certo.
+        entity.setId(id);
+
 
         return mapper.toDto(repository.save(entity));
     }
 
     public List<CategoriasDTO> listar() {
-        // Stream/Collect: É como uma esteira de fábrica. Pega as Entities,
-        // transforma uma por uma em DTO e no final junta tudo numa lista.
+
         return repository.findAll().stream()
                 .map(mapper::toDto)
                 .collect(Collectors.toList());
     }
 
     public CategoriasDTO buscarPorId(Long id) {
+
         return repository.findById(id)
                 .map(mapper::toDto)
                 .orElseThrow(() -> new ResourceNotFoundException("Categoria não existe."));
@@ -63,6 +61,7 @@ public class CategoriasService {
 
     @Transactional
     public void deletar(Long id) {
+
         if (!repository.existsById(id)) {
             throw new ResourceNotFoundException("Categoria não existe.");
         }
@@ -70,8 +69,8 @@ public class CategoriasService {
         try {
             repository.deleteById(id);
         } catch (DataIntegrityViolationException e) {
-            // IMPORTANTE: Se tiver produtos dentro da categoria, o banco não deixa deletar.
             throw new ConflictException("Não é possível deletar: existem produtos vinculados.");
         }
     }
+
 }

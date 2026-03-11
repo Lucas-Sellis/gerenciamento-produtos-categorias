@@ -7,9 +7,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ProdutosRepository extends JpaRepository<ProdutosEntity, Long> {
-//    Repository Vazio: O seu secretário sabe fazer o básico: guardar o brinquedo, jogar fora ou listar todos os que estão na caixa.
-//
-//    Repository com Métodos: Você está dando um treinamento extra para o seu secretário.
-//
-//    Você diz: "Ó, toda vez que eu te pedir 'BusquePorCor', você olha a cor do brinquedo e me traz só os azuis".
+
 }

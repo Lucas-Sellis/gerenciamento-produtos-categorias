@@ -28,6 +28,7 @@ public class ProdutosController {
     @ApiResponse(responseCode = "404", description = "Categoria informada não encontrada")
     @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     public ResponseEntity<ProdutosDTO> criar(@RequestBody @Valid ProdutosDTO dto) {
+
         return ResponseEntity.status(HttpStatus.CREATED).body(service.criar(dto));
     }
 
@@ -35,6 +36,7 @@ public class ProdutosController {
     @Operation(summary = "Listar todos os produtos", description = "Retorna uma lista completa de produtos cadastrados.")
     @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso")
     public ResponseEntity<List<ProdutosDTO>> listar() {
+
         return ResponseEntity.ok(service.listar());
     }
 
@@ -43,6 +45,7 @@ public class ProdutosController {
     @ApiResponse(responseCode = "200", description = "Produto encontrado")
     @ApiResponse(responseCode = "404", description = "Produto não encontrado")
     public ResponseEntity<ProdutosDTO> buscarPorId(@PathVariable Long id) {
+
         return ResponseEntity.ok(service.buscarPorId(id));
     }
 
@@ -51,6 +54,7 @@ public class ProdutosController {
     @ApiResponse(responseCode = "200", description = "Produto atualizado com sucesso")
     @ApiResponse(responseCode = "404", description = "Produto ou Categoria não encontrados")
     public ResponseEntity<ProdutosDTO> atualizar(@PathVariable Long id, @RequestBody @Valid ProdutosDTO dto) {
+
         return ResponseEntity.ok(service.atualizar(id, dto));
     }
 
@@ -59,7 +63,9 @@ public class ProdutosController {
     @ApiResponse(responseCode = "204", description = "Produto removido com sucesso")
     @ApiResponse(responseCode = "404", description = "Produto não encontrado")
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
+
         service.deletar(id);
         return ResponseEntity.noContent().build();
     }
+
 }
