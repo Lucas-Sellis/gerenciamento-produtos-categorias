@@ -21,53 +21,57 @@ public class CategoriasService {
     private final CategoriasRepository repository;
     private final CategoriasMapper mapper;
 
-
+    // @Transactional: "Tudo ou Nada". Se o banco falhar no meio do caminho,
+    // ele desfaz tudo para não deixar lixo no sistema.
     @Transactional
     public CategoriasDTO criar(CategoriasDTO dto) {
         try {
             CategoriasEntity entity = mapper.toEntity(dto);
             return mapper.toDto(repository.save(entity));
         } catch (DataIntegrityViolationException e) {
+            // Se tentar criar um nome que já existe (Unique), lança o erro de Conflito.
             throw new ConflictException("Categoria já existe.");
         }
     }
 
     @Transactional
     public CategoriasDTO atualizar(Long id, CategoriasDTO dto) {
-        // Mensagem específica para o fluxo de atualização
+        // Primeiro: Verifica se a categoria existe. Se não existir, lança o erro 404 (NotFound).
         CategoriasEntity entity = repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Não foi possível atualizar: Categoria com ID " + id + " não encontrada."));
+                .orElseThrow(() -> new ResourceNotFoundException("Categoria com ID " + id + " não encontrada."));
 
+        // updateEntityFromDto: Ele pega o que você escreveu no DTO e "cola" dentro da Entity que achamos no banco.
         mapper.updateEntityFromDto(dto, entity);
-        entity.setId(id); // Garante que o ID do banco não mude
+        entity.setId(id); // Trava o ID para garantir que estamos mexendo no brinquedo certo.
 
         return mapper.toDto(repository.save(entity));
     }
 
     public List<CategoriasDTO> listar() {
+        // Stream/Collect: É como uma esteira de fábrica. Pega as Entities,
+        // transforma uma por uma em DTO e no final junta tudo numa lista.
         return repository.findAll().stream()
                 .map(mapper::toDto)
                 .collect(Collectors.toList());
     }
 
     public CategoriasDTO buscarPorId(Long id) {
-        // Mensagem direta para a busca
         return repository.findById(id)
                 .map(mapper::toDto)
-                .orElseThrow(() -> new ResourceNotFoundException("Categoria com ID " + id + " não existe em nossa base de dados."));
+                .orElseThrow(() -> new ResourceNotFoundException("Categoria não existe."));
     }
 
     @Transactional
     public void deletar(Long id) {
-
         if (!repository.existsById(id)) {
-            throw new ResourceNotFoundException("Falha ao deletar: Categoria com ID " + id + " não existe.");
+            throw new ResourceNotFoundException("Categoria não existe.");
         }
 
         try {
             repository.deleteById(id);
         } catch (DataIntegrityViolationException e) {
-            throw new ConflictException("Não é possível deletar a categoria pois existem produtos vinculados.");
+            // IMPORTANTE: Se tiver produtos dentro da categoria, o banco não deixa deletar.
+            throw new ConflictException("Não é possível deletar: existem produtos vinculados.");
         }
     }
 }

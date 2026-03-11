@@ -16,24 +16,23 @@ public class ProdutosEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Define que o campo é obrigatório no banco de dados (NOT NULL)
+    // O nome do brinquedo. Não pode estar em branco, senão a gente não sabe o que é!
     @Column(name = "nome", nullable = false)
     private String nome;
 
     @Column(name = "descricao")
     private String descricao;
 
-    // Double permite operações matemáticas e casas decimais para valores monetários
+    // O preço do brinquedo (ex: 10.50). Sempre que for preço usar double
     @Column(name = "preco")
     private Double preco;
 
     /**
      * RELACIONAMENTO: @ManyToOne
-     * Muitos (Produtos) para Um (Categoria).
-     * Indica que vários registros desta tabela podem apontar para a mesma Categoria.
-     * @JoinColumn define a Foreign Key (FK) 'categoria_id' no banco de dados.
+     * Regra: "Muitos carrinhos (produtos) entram em uma única caixa (categoria)".
      */
     @ManyToOne
-    @JoinColumn(name = "categoria_id", nullable = false)
+    // É obrigatório (nullable = false) porque todo brinquedo tem que ter uma caixa!
+    @JoinColumn(name = "categoria_id", nullable = false)     // "Ajunta" o produto com a categoria dele.
     private CategoriasEntity categoria;
 }
